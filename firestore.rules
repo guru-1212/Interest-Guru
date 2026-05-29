@@ -20,7 +20,7 @@ service cloud.firestore {
     }
 
     function isApprovedOwner() {
-      return isOwner() && userDoc().data.isApproved == true;
+      return isOwner();
     }
 
     function isMember() {
