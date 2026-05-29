@@ -2,6 +2,7 @@
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AddMemberModal } from "@/components/owner/AddMemberModal";
+import { InterestCalculatorModal } from "@/components/owner/InterestCalculatorModal";
 import { MemberList } from "@/components/owner/MemberList";
 import { OwnerDashboardStats } from "@/components/owner/OwnerDashboardStats";
 import { ExportDataPanel } from "@/components/owner/ExportDataPanel";
@@ -19,7 +20,10 @@ export default function OwnerDashboardPage() {
               Manage members, shekda rates, payments, and proof documents.
             </p>
           </div>
-          <AddMemberModal />
+          <div className="flex flex-wrap gap-3">
+            <InterestCalculatorModal />
+            <AddMemberModal />
+          </div>
         </div>
 
         <OwnerDashboardStats />
