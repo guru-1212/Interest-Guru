@@ -2,7 +2,7 @@ import {
   Timestamp,
   type DocumentData,
 } from "firebase/firestore";
-import type { Loan, Member, ProofDocument, User } from "@/types";
+import type { Loan, Member, Payment, ProofDocument, User } from "@/types";
 
 export function timestampToDate(value: unknown): Date {
   if (value instanceof Timestamp) return value.toDate();
@@ -19,6 +19,7 @@ export function userFromDoc(id: string, data: DocumentData): User {
     role: data.role,
     isApproved: data.isApproved ?? false,
     ownerId: data.ownerId,
+    memberId: data.memberId,
     createdAt: timestampToDate(data.createdAt),
   };
 }
@@ -50,5 +51,21 @@ export function loanFromDoc(id: string, data: DocumentData): Loan {
     })),
     status: data.status ?? "active",
     settledAt: data.settledAt ? timestampToDate(data.settledAt) : undefined,
+    settlementAmount: data.settlementAmount,
+    settlementNote: data.settlementNote,
+  };
+}
+
+export function paymentFromDoc(id: string, data: DocumentData): Payment {
+  return {
+    id,
+    loanId: data.loanId,
+    ownerId: data.ownerId,
+    amount: data.amount ?? 0,
+    paidAt: timestampToDate(data.paidAt),
+    type: data.type ?? "both",
+    note: data.note,
+    createdBy: data.createdBy,
+    createdAt: timestampToDate(data.createdAt),
   };
 }

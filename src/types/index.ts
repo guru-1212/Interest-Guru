@@ -8,6 +8,7 @@ export interface User {
   role: UserRole;
   isApproved: boolean;
   ownerId?: string;
+  memberId?: string;
   createdAt: Date;
 }
 
@@ -43,6 +44,32 @@ export interface Loan {
   proofDocuments: ProofDocument[];
   status: LoanStatus;
   settledAt?: Date;
+  settlementAmount?: number;
+  settlementNote?: string;
+}
+
+export type PaymentType = "principal" | "interest" | "both";
+
+export interface Payment {
+  id: string;
+  loanId: string;
+  ownerId: string;
+  amount: number;
+  paidAt: Date;
+  type: PaymentType;
+  note?: string;
+  createdBy: string;
+  createdAt: Date;
+}
+
+export interface LoanBalance {
+  effectivePrincipal: number;
+  principalPaid: number;
+  interestPaid: number;
+  accruedInterest: number;
+  outstandingInterest: number;
+  grandTotal: number;
+  breakdown: InterestBreakdown;
 }
 
 export interface InterestBreakdown {

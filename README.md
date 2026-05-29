@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VyaajBook
 
-## Getting Started
+Professional Fintech Ledger — Shekda-based monthly interest tracking.
 
-First, run the development server:
+## Stack
+
+- Next.js (App Router) + TypeScript
+- Tailwind CSS (Slate / Emerald / White theme)
+- Firebase Auth, Firestore, Storage
+- date-fns, Lucide React
+
+## Getting started
 
 ```bash
+cd vyaajbook
+npm install
+cp .env.example .env.local   # optional: override Firebase config
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run unit tests: `npm test`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Open [http://localhost:3000](http://localhost:3000).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Firebase setup
 
-## Learn More
+1. Enable **Email/Password** authentication in Firebase Console.
+2. Create Firestore database and Storage bucket.
+3. Deploy security rules:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+firebase deploy --only firestore:rules,storage
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. Create your first **admin** user:
+   - Register any account, then in Firestore `users/{uid}` set `role` to `"admin"` and `isApproved` to `true`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Roles
 
-## Deploy on Vercel
+| Role   | Access |
+|--------|--------|
+| Admin  | Approve owners at `/admin` |
+| Owner  | Register → wait for approval → `/owner` dashboard |
+| Member | Register with same email/phone as member record → `/member` |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Shekda formula
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Monthly interest = `(Principal × Shekda%) / 100`
+- Daily (partial month) = `Monthly interest / 30`
+- Grand total = Principal + accrued interest
+
+## Project structure
+
+```
+src/
+  app/          # Routes (owner, admin, member, auth)
+  components/   # UI, owner, admin, auth
+  contexts/     # AuthContext
+  hooks/        # useAuth, useMembers, useLoans
+  lib/          # Firebase, calculations
+  types/        # User, Member, Loan interfaces
+```

@@ -1,0 +1,64 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userPath() {
+      return /databases/(default)/documents/users/$(request.auth.uid);
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && firestore.exists(userPath())
+        && firestore.get(userPath()).data.role == 'admin';
+    }
+
+    function loanPath(loanId) {
+      return /databases/(default)/documents/loans/$(loanId);
+    }
+
+    function ownsLoan(loanId) {
+      return isSignedIn()
+        && firestore.exists(loanPath(loanId))
+        && firestore.get(loanPath(loanId)).data.ownerId == request.auth.uid;
+    }
+
+    function memberPath(memberId) {
+      return /databases/(default)/documents/members/$(memberId);
+    }
+
+    function ownsMember(memberId) {
+      return isSignedIn()
+        && firestore.exists(memberPath(memberId))
+        && firestore.get(memberPath(memberId)).data.ownerId == request.auth.uid;
+    }
+
+    // Owner = loan/member ownerId matches auth uid, OR admin
+    function canManageLoanProofs(loanId) {
+      return ownsLoan(loanId) || isAdmin();
+    }
+
+    function canManageMemberFiles(memberId) {
+      return ownsMember(memberId) || isAdmin();
+    }
+
+    match /members/{memberId}/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if canManageMemberFiles(memberId);
+    }
+
+    match /loans/{loanId}/proofs/{fileName} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if canManageLoanProofs(loanId);
+    }
+
+    match /loans/{loanId}/{allPaths=**} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if canManageLoanProofs(loanId);
+    }
+  }
+}

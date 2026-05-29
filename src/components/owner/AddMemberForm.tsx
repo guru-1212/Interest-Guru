@@ -7,19 +7,27 @@ import {
   serverTimestamp,
   updateDoc,
   doc,
+  Timestamp,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage } from "@/lib/firebase";
+import { auth, db, storage } from "@/lib/firebase";
+import { uploadProofDocuments } from "@/lib/proof-documents";
 import { useAuth } from "@/hooks/useAuth";
-import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { UserPlus, Upload } from "lucide-react";
-import type { ProofDocumentType } from "@/types";
+import { getAuthErrorMessage } from "@/lib/auth-errors";
 
-export function AddMemberForm() {
+interface AddMemberFormProps {
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
   const { user } = useAuth();
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [principal, setPrincipal] = useState("");
   const [shekdaRate, setShekdaRate] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -31,24 +39,27 @@ export function AddMemberForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    const ownerId = auth.currentUser?.uid ?? user?.id;
+    if (!ownerId) return;
     setError("");
     setSuccess(false);
     setLoading(true);
 
     try {
       const memberRef = await addDoc(collection(db, "members"), {
-        ownerId: user.id,
+        ownerId,
         fullName,
+        email: email || null,
+        phone: phone || null,
         createdAt: serverTimestamp(),
       });
 
       const loanRef = await addDoc(collection(db, "loans"), {
         memberId: memberRef.id,
-        ownerId: user.id,
+        ownerId,
         principal: parseFloat(principal),
         shekdaRate: parseFloat(shekdaRate),
-        startDate: new Date(startDate),
+        startDate: Timestamp.fromDate(new Date(startDate)),
         proofDocuments: [],
         status: "active",
         createdAt: serverTimestamp(),
@@ -68,57 +79,28 @@ export function AddMemberForm() {
         });
       }
 
-      const proofDocuments: {
-        id: string;
-        name: string;
-        url: string;
-        type: ProofDocumentType;
-        uploadedAt: Date;
-      }[] = [];
-
-      if (proofFiles) {
-        for (let i = 0; i < proofFiles.length; i++) {
-          const file = proofFiles[i];
-          const proofRef = ref(
-            storage,
-            `loans/${loanRef.id}/proofs/${file.name}`
-          );
-          await uploadBytes(proofRef, file);
-          const url = await getDownloadURL(proofRef);
-          const lower = file.name.toLowerCase();
-          let type: ProofDocumentType = "other";
-          if (lower.includes("aadhar") || lower.includes("aadhaar"))
-            type = "aadhar";
-          else if (lower.includes("pan")) type = "pan";
-          else if (lower.includes("bond")) type = "bond";
-
-          proofDocuments.push({
-            id: `${loanRef.id}_${i}`,
-            name: file.name,
-            url,
-            type,
-            uploadedAt: new Date(),
-          });
-        }
-        await updateDoc(doc(db, "loans", loanRef.id), { proofDocuments });
+      if (proofFiles?.length) {
+        await uploadProofDocuments(loanRef.id, proofFiles);
       }
 
       setFullName("");
+      setEmail("");
+      setPhone("");
       setPrincipal("");
       setShekdaRate("");
       setStartDate("");
       setProfilePhoto(null);
       setProofFiles(null);
       setSuccess(true);
+      onSuccess?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add member");
+      setError(getAuthErrorMessage(err));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Card title="Add Member">
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
           label="Full Name"
@@ -126,6 +108,20 @@ export function AddMemberForm() {
           onChange={(e) => setFullName(e.target.value)}
           required
         />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="Email (for member login)"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <Input
+            label="Phone"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </div>
         <div>
           <label className="block text-sm font-medium text-slate-700">
             Profile Photo
@@ -184,11 +180,17 @@ export function AddMemberForm() {
         {success && (
           <p className="text-sm text-emerald-600">Member added successfully.</p>
         )}
-        <Button type="submit" loading={loading}>
-          <UserPlus className="h-4 w-4" />
-          Add Member
-        </Button>
+        <div className="flex gap-3 pt-2">
+          {onCancel && (
+            <Button type="button" variant="secondary" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" loading={loading} className="flex-1">
+            <UserPlus className="h-4 w-4" />
+            Save Member
+          </Button>
+        </div>
       </form>
-    </Card>
   );
 }

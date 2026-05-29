@@ -1,0 +1,89 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      return isSignedIn() && userDoc().data.role == 'admin';
+    }
+
+    function isOwner() {
+      return isSignedIn() && userDoc().data.role == 'owner';
+    }
+
+    function isApprovedOwner() {
+      return isOwner() && userDoc().data.isApproved == true;
+    }
+
+    function isMember() {
+      return isSignedIn() && userDoc().data.role == 'member';
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isAdmin() || (request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isApproved']));
+      allow delete: if isAdmin();
+    }
+
+    match /members/{memberId} {
+      allow read: if isAdmin()
+        || (isApprovedOwner() && resource.data.ownerId == request.auth.uid)
+        || (isMember() && (
+          resource.data.email == userDoc().data.email
+          || resource.data.phone == userDoc().data.phone
+          || memberId == userDoc().data.memberId
+        ));
+      allow create: if isApprovedOwner()
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isApprovedOwner()
+        && resource.data.ownerId == request.auth.uid;
+    }
+
+    function canReadLoan(loanId) {
+      let loan = get(/databases/$(database)/documents/loans/$(loanId));
+      return isAdmin()
+        || (isApprovedOwner() && loan.data.ownerId == request.auth.uid)
+        || (isMember() && exists(/databases/$(database)/documents/members/$(loan.data.memberId))
+          && (
+            get(/databases/$(database)/documents/members/$(loan.data.memberId)).data.email == userDoc().data.email
+            || get(/databases/$(database)/documents/members/$(loan.data.memberId)).data.phone == userDoc().data.phone
+            || loan.data.memberId == userDoc().data.memberId
+          ));
+    }
+
+    match /loans/{loanId} {
+      allow read: if isAdmin()
+        || (isApprovedOwner() && resource.data.ownerId == request.auth.uid)
+        || (isMember() && exists(/databases/$(database)/documents/members/$(resource.data.memberId))
+          && (
+            get(/databases/$(database)/documents/members/$(resource.data.memberId)).data.email == userDoc().data.email
+            || get(/databases/$(database)/documents/members/$(resource.data.memberId)).data.phone == userDoc().data.phone
+            || resource.data.memberId == userDoc().data.memberId
+          ));
+      allow create: if isApprovedOwner()
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isApprovedOwner()
+        && resource.data.ownerId == request.auth.uid;
+
+      match /payments/{paymentId} {
+        allow read: if canReadLoan(loanId);
+        allow create: if isApprovedOwner()
+          && get(/databases/$(database)/documents/loans/$(loanId)).data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == request.auth.uid
+          && request.resource.data.loanId == loanId;
+        allow update, delete: if isApprovedOwner()
+          && resource.data.ownerId == request.auth.uid;
+      }
+    }
+  }
+}

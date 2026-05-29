@@ -30,7 +30,8 @@ interface AuthContextValue {
     email: string,
     password: string,
     displayName: string,
-    role: UserRole
+    role: UserRole,
+    extras?: { phone?: string }
   ) => Promise<void>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -77,15 +78,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     displayName: string,
-    role: UserRole
+    role: UserRole,
+    extras?: { phone?: string }
   ) => {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    const isApproved = role === "admin";
     await setDoc(doc(db, "users", cred.user.uid), {
       email,
       displayName,
       role,
-      isApproved,
+      phone: extras?.phone ?? null,
+      isApproved: true,
       createdAt: serverTimestamp(),
     });
     await fetchUserProfile(cred.user.uid);
