@@ -1,1 +1,8 @@
-<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="112" fill="#059669"/>
+  <path d="M128 100C128 88.9543 136.954 80 148 80H384C395.046 80 404 88.9543 404 100V364C404 375.046 395.046 384 384 384H148C136.954 384 128 375.046 128 364V100Z" fill="white"/>
+  <path d="M128 364C128 375.046 136.954 384 148 384H384V412C384 423.046 375.046 432 364 432H128C116.954 432 108 423.046 108 412V120C108 108.954 116.954 100 128 100V364Z" fill="#D1FAE5"/>
+  <path d="M176 144H356" stroke="#059669" stroke-width="24" stroke-linecap="round"/>
+  <path d="M176 216H356" stroke="#059669" stroke-width="24" stroke-linecap="round"/>
+  <path d="M176 288H266" stroke="#059669" stroke-width="24" stroke-linecap="round"/>
+</svg>
