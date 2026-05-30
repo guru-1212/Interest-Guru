@@ -9,13 +9,18 @@ import type { Payment } from "@/types";
 export function usePayments(loanId: string | undefined) {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [prevLoanId, setPrevLoanId] = useState(loanId);
 
-  useEffect(() => {
+  if (loanId !== prevLoanId) {
+    setPrevLoanId(loanId);
     if (!loanId) {
       setPayments([]);
       setLoading(false);
-      return;
     }
+  }
+
+  useEffect(() => {
+    if (!loanId) return;
 
     const unsub = onSnapshot(
       collection(db, "loans", loanId, "payments"),

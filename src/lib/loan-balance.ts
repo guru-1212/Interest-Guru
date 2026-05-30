@@ -1,5 +1,5 @@
 import { calculateInterest } from "@/lib/calculations";
-import type { InterestBreakdown, LoanBalance, Payment } from "@/types";
+import type { LoanBalance, Payment } from "@/types";
 
 function round2(n: number) {
   return Math.round(n * 100) / 100;

@@ -70,11 +70,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsub();
   }, [fetchUserProfile]);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);
-  };
+  }, []);
 
-  const signUp = async (
+  const signUp = useCallback(async (
     email: string,
     password: string,
     displayName: string,
@@ -91,12 +91,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       createdAt: serverTimestamp(),
     });
     await fetchUserProfile(cred.user.uid);
-  };
+  }, [fetchUserProfile]);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     await firebaseSignOut(auth);
     setUser(null);
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signOut,
       refreshUser,
     }),
-    [firebaseUser, user, loading, refreshUser]
+    [firebaseUser, user, loading, signIn, signUp, signOut, refreshUser]
   );
 
   return (

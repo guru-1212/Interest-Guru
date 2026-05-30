@@ -17,17 +17,26 @@ export function useMemberDashboard(user: User | null) {
   const [member, setMember] = useState<Member | null>(null);
   const [loan, setLoan] = useState<Loan | null>(null);
   const [loading, setLoading] = useState(true);
+  const [prevUserId, setPrevUserId] = useState(user?.id);
+if (user?.id !== prevUserId) {
+  setPrevUserId(user?.id);
+  if (!user) {
+    setMember(null);
+    setLoan(null);
+    setLoading(false);
+  } else {
+    const hasIdentity = user.memberId || user.email || user.phone;
+    setLoading(!!hasIdentity);
+  }
+}
 
-  useEffect(() => {
-    if (!user) {
-      setMember(null);
-      setLoan(null);
-      setLoading(false);
-      return;
-    }
+useEffect(() => {
+  if (!user) return;
 
-    setLoading(true);
-    let memberUnsub: (() => void) | undefined;
+  const hasIdentity = user.memberId || user.email || user.phone;
+  if (!hasIdentity) return;
+
+  let memberUnsub: (() => void) | undefined;
     let loanUnsub: (() => void) | undefined;
 
     const attachLoanListener = (memberId: string) => {
@@ -86,11 +95,6 @@ export function useMemberDashboard(user: User | null) {
       );
     }
 
-    if (queries.length === 0) {
-      setLoading(false);
-      return;
-    }
-
     let found = false;
     let pending = queries.length;
 
@@ -116,7 +120,7 @@ export function useMemberDashboard(user: User | null) {
       unsubs.forEach((u) => u());
       loanUnsub?.();
     };
-  }, [user?.id, user?.email, user?.phone, user?.memberId]);
+  }, [user]);
 
   return { member, loan, loading };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { doc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -19,10 +19,12 @@ export function MemberProfileCard({ member, loanStatus }: MemberProfileCardProps
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [photoUrl, setPhotoUrl] = useState(member.profilePhotoUrl);
+  const [prevMemberId, setPrevMemberId] = useState(member.id);
 
-  useEffect(() => {
+  if (member.id !== prevMemberId) {
+    setPrevMemberId(member.id);
     setPhotoUrl(member.profilePhotoUrl);
-  }, [member.profilePhotoUrl, member.id]);
+  }
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

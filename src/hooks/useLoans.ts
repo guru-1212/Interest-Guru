@@ -16,13 +16,18 @@ import type { Loan } from "@/types";
 export function useOwnerLoans(ownerId: string | undefined) {
   const [loans, setLoans] = useState<Loan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [prevOwnerId, setPrevOwnerId] = useState(ownerId);
 
-  useEffect(() => {
+  if (ownerId !== prevOwnerId) {
+    setPrevOwnerId(ownerId);
     if (!ownerId) {
       setLoans([]);
       setLoading(false);
-      return;
     }
+  }
+
+  useEffect(() => {
+    if (!ownerId) return;
 
     const q = query(
       collection(db, "loans"),
@@ -43,13 +48,18 @@ export function useOwnerLoans(ownerId: string | undefined) {
 export function useLoanByMember(memberId: string | undefined) {
   const [loan, setLoan] = useState<Loan | null>(null);
   const [loading, setLoading] = useState(true);
+  const [prevMemberId, setPrevMemberId] = useState(memberId);
 
-  useEffect(() => {
+  if (memberId !== prevMemberId) {
+    setPrevMemberId(memberId);
     if (!memberId) {
       setLoan(null);
       setLoading(false);
-      return;
     }
+  }
+
+  useEffect(() => {
+    if (!memberId) return;
 
     const q = query(
       collection(db, "loans"),

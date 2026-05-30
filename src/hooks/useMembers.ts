@@ -14,13 +14,18 @@ import type { Member } from "@/types";
 export function useMembers(ownerId: string | undefined) {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
+  const [prevOwnerId, setPrevOwnerId] = useState(ownerId);
 
-  useEffect(() => {
+  if (ownerId !== prevOwnerId) {
+    setPrevOwnerId(ownerId);
     if (!ownerId) {
       setMembers([]);
       setLoading(false);
-      return;
     }
+  }
+
+  useEffect(() => {
+    if (!ownerId) return;
 
     const q = query(
       collection(db, "members"),
