@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VyaajBook - Analytics Concept</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    </style>
+</head>
+<body class="bg-[#f8fafc] min-h-screen">
+    <div class="max-w-screen-2xl mx-auto flex">
+        <!-- Compact Sidebar -->
+        <nav class="w-20 bg-slate-900 h-screen sticky top-0 flex flex-col items-center py-8 gap-8">
+            <div class="w-12 h-12 gradient-bg rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-900/20">
+                <i data-lucide="zap" class="w-6 h-6"></i>
+            </div>
+            <div class="flex flex-col gap-6">
+                <a href="#" class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center transition">
+                    <i data-lucide="grid" class="w-6 h-6"></i>
+                </a>
+                <a href="#" class="w-12 h-12 rounded-2xl text-slate-500 hover:bg-slate-800 flex items-center justify-center transition">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                </a>
+                <a href="#" class="w-12 h-12 rounded-2xl text-slate-500 hover:bg-slate-800 flex items-center justify-center transition">
+                    <i data-lucide="pie-chart" class="w-6 h-6"></i>
+                </a>
+            </div>
+            <div class="mt-auto">
+                <a href="#" class="w-12 h-12 rounded-2xl text-slate-500 hover:bg-slate-800 flex items-center justify-center transition">
+                    <i data-lucide="log-out" class="w-6 h-6"></i>
+                </a>
+            </div>
+        </nav>
+
+        <main class="flex-1 p-8">
+            <div class="flex justify-between items-center mb-10">
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-900">Portfolio Analytics</h1>
+                    <p class="text-slate-500 font-medium">Insights and growth for May 2026</p>
+                </div>
+                <div class="bg-white p-1 rounded-2xl shadow-sm border border-slate-200 flex">
+                    <button class="px-6 py-2 bg-slate-900 text-white rounded-xl text-sm font-semibold">Active</button>
+                    <button class="px-6 py-2 text-slate-500 text-sm font-semibold hover:text-slate-900">Settled</button>
+                </div>
+            </div>
+
+            <!-- Top Cards -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+                <div class="lg:col-span-2 grid grid-cols-2 gap-6">
+                    <div class="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition duration-500">
+                            <i data-lucide="trending-up" class="w-32 h-32"></i>
+                        </div>
+                        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest mb-2">Total Interest Accrued</p>
+                        <h2 class="text-4xl font-bold text-slate-900 mb-4">₹2,37,230</h2>
+                        <div class="flex items-center gap-2 text-emerald-500 text-sm font-bold">
+                            <i data-lucide="trending-up" class="w-4 h-4"></i>
+                            <span>+₹1,240 today</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-8 rounded-[2rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+                        <div class="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition duration-500">
+                            <i data-lucide="users" class="w-32 h-32"></i>
+                        </div>
+                        <p class="text-slate-400 font-bold text-xs uppercase tracking-widest mb-2">Member Strength</p>
+                        <h2 class="text-4xl font-bold text-slate-900 mb-4">42 <span class="text-lg text-slate-300 font-medium">Users</span></h2>
+                        <p class="text-slate-500 text-sm font-medium">38 active · 4 settled</p>
+                    </div>
+                </div>
+                
+                <div class="gradient-bg p-8 rounded-[2rem] text-white shadow-xl shadow-emerald-200 flex flex-col justify-between">
+                    <div>
+                        <p class="text-emerald-100/80 font-bold text-xs uppercase tracking-widest mb-1">Total Assets</p>
+                        <h2 class="text-4xl font-bold mb-2">₹14,82,230</h2>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex justify-between text-sm font-medium">
+                            <span class="text-emerald-100/60">Principal</span>
+                            <span>₹12,45,000</span>
+                        </div>
+                        <div class="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
+                            <div class="h-full bg-white w-4/5"></div>
+                        </div>
+                        <button class="w-full py-3 bg-white text-emerald-600 rounded-xl font-bold hover:bg-emerald-50 transition">
+                            Create New Loan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Section -->
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-8">
+                <div class="xl:col-span-3 bg-white rounded-[2rem] border border-slate-100 shadow-sm p-8">
+                    <div class="flex justify-between items-center mb-8">
+                        <h3 class="text-xl font-bold">Performance List</h3>
+                        <button class="text-slate-400 hover:text-slate-900 transition">
+                            <i data-lucide="filter" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        <!-- List Item -->
+                        <div class="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-slate-600">JD</div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900">John Doe</h4>
+                                    <p class="text-xs text-slate-500">2% Shekda · ₹50k principal</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-slate-900">₹54,200</p>
+                                <p class="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">+₹1,000 interest</p>
+                            </div>
+                        </div>
+                        <!-- List Item -->
+                        <div class="flex items-center justify-between p-4 rounded-2xl hover:bg-slate-50 transition border border-transparent hover:border-slate-100">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-slate-600">AS</div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900">Alice Smith</h4>
+                                    <p class="text-xs text-slate-500">1.5% Shekda · ₹200k principal</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-slate-900">₹2,12,000</p>
+                                <p class="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">+₹3,000 interest</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-8 flex flex-col gap-6">
+                    <h3 class="text-xl font-bold">Quick Actions</h3>
+                    <button class="flex items-center gap-4 p-4 rounded-2xl bg-emerald-50 text-emerald-700 font-bold transition hover:scale-105">
+                        <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                        Add Member
+                    </button>
+                    <button class="flex items-center gap-4 p-4 rounded-2xl bg-blue-50 text-blue-700 font-bold transition hover:scale-105">
+                        <i data-lucide="calculator" class="w-6 h-6"></i>
+                        Calculator
+                    </button>
+                    <button class="flex items-center gap-4 p-4 rounded-2xl bg-violet-50 text-violet-700 font-bold transition hover:scale-105">
+                        <i data-lucide="share" class="w-6 h-6"></i>
+                        Export Data
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

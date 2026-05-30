@@ -7,8 +7,14 @@ import { useOwnerLoans } from "@/hooks/useLoans";
 import { MemberCard } from "./MemberCard";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import type { Payment } from "@/types";
 
-export function MemberList() {
+interface MemberListProps {
+  paymentsByLoan?: Record<string, Payment[]>;
+  paymentsLoading?: boolean;
+}
+
+export function MemberList({ paymentsByLoan = {}, paymentsLoading = false }: MemberListProps) {
   const { user } = useAuth();
   const { members, loading: membersLoading } = useMembers(user?.id);
   const { loans, loading: loansLoading } = useOwnerLoans(user?.id);
@@ -71,14 +77,18 @@ export function MemberList() {
           refreshing ? "opacity-60" : ""
         }`}
       >
-        {members.map((member) => (
-          <MemberCard
-            key={member.id}
-            member={member}
-            loan={loanByMember.get(member.id)}
-            compact
-          />
-        ))}
+        {members.map((member) => {
+          const loan = loanByMember.get(member.id);
+          return (
+            <MemberCard
+              key={member.id}
+              member={member}
+              loan={loan}
+              payments={loan ? (paymentsByLoan[loan.id] || []) : []}
+              paymentsLoaded={!paymentsLoading}
+            />
+          );
+        })}
       </div>
     </div>
   );

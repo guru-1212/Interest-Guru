@@ -7,6 +7,7 @@ import { useOwnerLoans } from "@/hooks/useLoans";
 import { useInterestClock } from "@/hooks/useInterestClock";
 import { computeLoanBalance } from "@/lib/loan-balance";
 import { formatCurrency } from "@/lib/calculations";
+import { Users, Landmark, Wallet, TrendingUp } from "lucide-react";
 import type { Payment } from "@/types";
 
 interface OwnerDashboardStatsProps {
@@ -51,11 +52,11 @@ export function OwnerDashboardStats({
 
   if (membersLoading || loansLoading) {
     return (
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-8 grid gap-4 grid-cols-2 lg:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
           <div
             key={i}
-            className="h-24 animate-pulse rounded-xl bg-slate-200"
+            className="h-32 animate-pulse rounded-3xl bg-slate-200"
           />
         ))}
       </div>
@@ -63,40 +64,67 @@ export function OwnerDashboardStats({
   }
 
   const items = [
-    { label: "Members", value: String(stats.memberCount) },
-    { label: "Active loans", value: String(stats.activeLoanCount) },
-    {
-      label: "Outstanding principal",
-      value: formatCurrency(stats.totalPrincipal),
+    { 
+      label: "Members", 
+      value: String(stats.memberCount),
+      icon: Users,
+      color: "emerald"
+    },
+    { 
+      label: "Active Loans", 
+      value: String(stats.activeLoanCount),
+      icon: Landmark,
+      color: "blue"
     },
     {
-      label: "Live total owed",
+      label: "Outstanding Principal",
+      value: formatCurrency(stats.totalPrincipal),
+      icon: Wallet,
+      color: "violet"
+    },
+    {
+      label: "Live Total Owed",
       value: formatCurrency(stats.totalOutstanding),
       highlight: true,
+      icon: TrendingUp,
+      color: "emerald"
     },
   ];
 
   return (
-    <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="mb-8 grid gap-4 grid-cols-2 lg:grid-cols-4 sm:gap-6">
       {items.map((item) => (
         <div
           key={item.label}
-          className={`rounded-xl border p-4 ${
+          className={`relative overflow-hidden rounded-3xl border p-4 sm:p-6 transition-all duration-300 ${
             item.highlight
-              ? "border-emerald-200 bg-emerald-50"
-              : "border-slate-200 bg-white"
+              ? "border-emerald-100 bg-emerald-600 text-white shadow-lg shadow-emerald-200"
+              : "border-slate-100 bg-white shadow-sm hover:border-emerald-200 hover:shadow-md"
           }`}
         >
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
-            {item.label}
-          </p>
-          <p
-            className={`mt-1 text-xl font-bold ${
-              item.highlight ? "text-emerald-700" : "text-slate-800"
-            }`}
-          >
-            {item.value}
-          </p>
+          <div className="flex flex-col h-full justify-between">
+            <div className="flex justify-between items-start mb-4">
+              <div className={`p-2 rounded-2xl ${
+                item.highlight ? "bg-white/20" : `bg-${item.color}-50`
+              }`}>
+                <item.icon className={`h-5 w-5 sm:h-6 sm:w-6 ${
+                  item.highlight ? "text-white" : `text-${item.color}-600`
+                }`} />
+              </div>
+            </div>
+            <div>
+              <p className={`text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1 ${
+                item.highlight ? "text-emerald-100" : "text-slate-500"
+              }`}>
+                {item.label}
+              </p>
+              <p className={`text-base sm:text-2xl font-bold truncate ${
+                item.highlight ? "text-white" : "text-slate-900"
+              }`}>
+                {item.value}
+              </p>
+            </div>
+          </div>
         </div>
       ))}
     </div>
