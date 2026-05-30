@@ -38,14 +38,12 @@ export function InterestCalculatorModal() {
 
   return (
     <>
-      <Button
-        variant="outline"
-        onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2"
-      >
-        <Calculator className="h-4 w-4" />
-        Interest Calculator
-      </Button>
+     <Button
+  variant="secondary" // Use an allowed type like "secondary", "ghost", or "default"
+  onClick={() => setIsOpen(true)}
+  className="flex items-center gap-2"
+>
+
 
       <Modal open={isOpen} onClose={handleClose} title="Quick Interest Calculator">
         <div className="space-y-6">
