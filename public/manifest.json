@@ -11,15 +11,9 @@
   "icons": [
     {
       "src": "/window.svg",
-      "sizes": "any",
+      "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"
-    },
-    {
-      "src": "/window.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
     },
     {
       "src": "/window.svg",

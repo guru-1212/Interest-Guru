@@ -53,6 +53,10 @@ export function loanFromDoc(id: string, data: DocumentData): Loan {
     settledAt: data.settledAt ? timestampToDate(data.settledAt) : undefined,
     settlementAmount: data.settlementAmount,
     settlementNote: data.settlementNote,
+    capitalizationHistory: (data.capitalizationHistory ?? []).map((c: { id: string; previousPrincipal: number; interestAdded: number; newPrincipal: number; date: unknown; note?: string }) => ({
+      ...c,
+      date: timestampToDate(c.date),
+    })),
   };
 }
 

@@ -34,6 +34,15 @@ export interface ProofDocument {
   uploadedAt: Date;
 }
 
+export interface CapitalizationEvent {
+  id: string;
+  previousPrincipal: number;
+  interestAdded: number;
+  newPrincipal: number;
+  date: Date;
+  note?: string;
+}
+
 export interface Loan {
   id: string;
   memberId: string;
@@ -46,6 +55,7 @@ export interface Loan {
   settledAt?: Date;
   settlementAmount?: number;
   settlementNote?: string;
+  capitalizationHistory?: CapitalizationEvent[];
 }
 
 export type PaymentType = "principal" | "interest" | "both";

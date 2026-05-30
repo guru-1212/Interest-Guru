@@ -19,8 +19,10 @@ import { MemberProfileCard } from "@/components/owner/MemberProfileCard";
 import { AddPaymentForm } from "@/components/owner/AddPaymentForm";
 import { PaymentsList } from "@/components/owner/PaymentsList";
 import { SettleLoanModal } from "@/components/owner/SettleLoanModal";
+import { CapitalizeInterestModal } from "@/components/owner/CapitalizeInterestModal";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { RefreshCcw, TrendingUp } from "lucide-react";
 import type { Member } from "@/types";
 
 export default function MemberDetailPage({
@@ -34,6 +36,7 @@ export default function MemberDetailPage({
   const { payments, loading: paymentsLoading } = usePayments(loan?.id);
   const asOf = useInterestClock();
   const [settleOpen, setSettleOpen] = useState(false);
+  const [capitalizeOpen, setCapitalizeOpen] = useState(false);
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "members", id), (snap) => {
@@ -92,11 +95,40 @@ export default function MemberDetailPage({
               Live balance {formatCurrency(balance.grandTotal)} · updated{" "}
               {asOf.toLocaleTimeString()}
             </p>
-            <div className="mt-6">
+            <div className="mt-6 flex flex-wrap gap-3">
               <Button variant="primary" onClick={() => setSettleOpen(true)}>
                 <CheckCircle className="h-4 w-4" />
                 Settle Loan
               </Button>
+              <Button 
+                variant="secondary" 
+                onClick={() => setCapitalizeOpen(true)}
+                disabled={!balance.outstandingInterest || balance.outstandingInterest <= 0}
+              >
+                <RefreshCcw className="h-4 w-4" />
+                Capitalize Interest
+              </Button>
+            </div>
+          </Card>
+        )}
+
+        {loan?.capitalizationHistory && loan.capitalizationHistory.length > 0 && (
+          <Card title="Capitalization History" className="mb-8">
+            <div className="space-y-4">
+              {loan.capitalizationHistory.map((event) => (
+                <div key={event.id} className="flex items-start gap-3 rounded-lg border border-slate-100 p-3 text-sm">
+                  <TrendingUp className="mt-1 h-4 w-4 text-emerald-600 shrink-0" />
+                  <div className="flex-1">
+                    <div className="flex justify-between font-medium text-slate-900">
+                      <span>Interest added to principal</span>
+                      <span>{formatCurrency(event.interestAdded)}</span>
+                    </div>
+                    <div className="mt-1 flex justify-between text-xs text-slate-500">
+                      <span>{event.date.toLocaleDateString()} · New Principal: {formatCurrency(event.newPrincipal)}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </Card>
         )}
@@ -118,6 +150,15 @@ export default function MemberDetailPage({
             suggestedAmount={balance?.grandTotal ?? loan.principal}
             open={settleOpen}
             onClose={() => setSettleOpen(false)}
+          />
+        )}
+
+        {loan && balance && (
+          <CapitalizeInterestModal
+            loan={loan}
+            balance={balance}
+            open={capitalizeOpen}
+            onClose={() => setCapitalizeOpen(false)}
           />
         )}
 
