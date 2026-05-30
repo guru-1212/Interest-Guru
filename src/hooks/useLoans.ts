@@ -50,12 +50,11 @@ export function useLoanByMember(memberId: string | undefined) {
   const [loading, setLoading] = useState(true);
   const [prevMemberId, setPrevMemberId] = useState(memberId);
 
+  // Adjust state during render when memberId changes
   if (memberId !== prevMemberId) {
     setPrevMemberId(memberId);
-    if (!memberId) {
-      setLoan(null);
-      setLoading(false);
-    }
+    setLoan(null);
+    setLoading(!!memberId); // If no memberId, we aren't loading anything
   }
 
   useEffect(() => {
@@ -73,6 +72,9 @@ export function useLoanByMember(memberId: string | undefined) {
         const d = snap.docs[0];
         setLoan(loanFromDoc(d.id, d.data()));
       }
+      setLoading(false);
+    }, (error) => {
+      console.error("Error in useLoanByMember snapshot:", error);
       setLoading(false);
     });
 

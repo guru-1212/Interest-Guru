@@ -30,6 +30,7 @@ export interface ProofDocument {
   id: string;
   name: string;
   url: string;
+  storagePath?: string;
   type: ProofDocumentType;
   uploadedAt: Date;
 }

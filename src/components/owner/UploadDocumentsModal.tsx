@@ -5,17 +5,14 @@ import { FileImage } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { UploadDocumentsForm } from "./UploadDocumentsForm";
-import type { ProofDocument } from "@/types";
 
 interface UploadDocumentsModalProps {
   loanId: string;
-  existingDocuments: ProofDocument[];
   settled?: boolean;
 }
 
 export function UploadDocumentsModal({
   loanId,
-  existingDocuments,
   settled = false,
 }: UploadDocumentsModalProps) {
   const [open, setOpen] = useState(false);
@@ -51,7 +48,6 @@ export function UploadDocumentsModal({
           <UploadDocumentsForm
             key={formKey}
             loanId={loanId}
-            existingDocuments={existingDocuments}
             onSuccess={() => setOpen(false)}
             onCancel={() => setOpen(false)}
           />

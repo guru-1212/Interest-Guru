@@ -1,5 +1,5 @@
-import { doc, updateDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { doc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 import { auth, db, storage } from "@/lib/firebase";
 import type { ProofDocument, ProofDocumentType } from "@/types";
 
@@ -18,31 +18,92 @@ export function inferProofType(fileName: string): ProofDocumentType {
 export async function uploadProofDocuments(
   loanId: string,
   files: FileList | File[],
-  existing: ProofDocument[] = []
-): Promise<ProofDocument[]> {
+  onProgress?: (progress: number) => void
+): Promise<void> {
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error("You must be signed in to upload documents.");
 
   const fileArray = Array.from(files);
+  const totalFiles = fileArray.length;
   const newDocs: ProofDocument[] = [];
+  
+  const progressMap = new Map<number, number>();
+
+  const uploadFile = (file: File, index: number): Promise<ProofDocument> => {
+    return new Promise((resolve, reject) => {
+      const uniqueName = `${Date.now()}_${safeStorageFileName(file.name)}`;
+      const storagePath = `loans/${loanId}/proofs/${uniqueName}`;
+      const proofRef = ref(storage, storagePath);
+      const uploadTask = uploadBytesResumable(proofRef, file);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          progressMap.set(index, progress);
+          
+          if (onProgress) {
+            const totalProgress = Array.from(progressMap.values()).reduce((a, b) => a + b, 0) / totalFiles;
+            onProgress(Math.round(totalProgress));
+          }
+        },
+        (error) => reject(error),
+        async () => {
+          const url = await getDownloadURL(uploadTask.snapshot.ref);
+          resolve({
+            id: `${loanId}_${uniqueName}`,
+            name: file.name,
+            url,
+            storagePath,
+            type: inferProofType(file.name),
+            uploadedAt: new Date(),
+          });
+        }
+      );
+    });
+  };
 
   for (let i = 0; i < fileArray.length; i++) {
-    const file = fileArray[i];
-    const uniqueName = `${Date.now()}_${safeStorageFileName(file.name)}`;
-    const proofRef = ref(storage, `loans/${loanId}/proofs/${uniqueName}`);
-    await uploadBytes(proofRef, file);
-    const url = await getDownloadURL(proofRef);
-
-    newDocs.push({
-      id: `${loanId}_${uniqueName}`,
-      name: file.name,
-      url,
-      type: inferProofType(file.name),
-      uploadedAt: new Date(),
-    });
+    const doc = await uploadFile(fileArray[i], i);
+    newDocs.push(doc);
   }
 
-  const merged = [...existing, ...newDocs];
-  await updateDoc(doc(db, "loans", loanId), { proofDocuments: merged });
-  return merged;
+  // Use arrayUnion for atomic update and immediate real-time reflection
+  await updateDoc(doc(db, "loans", loanId), { 
+    proofDocuments: arrayUnion(...newDocs) 
+  });
+}
+
+export async function deleteProofDocument(
+  loanId: string,
+  docId: string,
+  existing: ProofDocument[]
+): Promise<void> {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error("You must be signed in to delete documents.");
+
+  const docToDelete = existing.find((d) => d.id === docId);
+  if (!docToDelete) throw new Error("Document not found.");
+
+  // 1. Delete from Storage
+  let path = docToDelete.storagePath;
+  if (!path) {
+    const uniqueName = docId.replace(`${loanId}_`, "");
+    path = `loans/${loanId}/proofs/${uniqueName}`;
+  }
+
+  const proofRef = ref(storage, path);
+  try {
+    await deleteObject(proofRef);
+  } catch (error: unknown) {
+    console.error("Error deleting from storage:", error);
+    if (error && typeof error === "object" && "code" in error && error.code !== "storage/object-not-found") {
+      throw error;
+    }
+  }
+
+  // 2. Remove from Firestore using arrayRemove for atomic update
+  await updateDoc(doc(db, "loans", loanId), { 
+    proofDocuments: arrayRemove(docToDelete) 
+  });
 }

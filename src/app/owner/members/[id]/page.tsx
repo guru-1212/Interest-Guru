@@ -195,11 +195,13 @@ export default function MemberDetailPage({
             <div className="mb-6">
               <UploadDocumentsModal
                 loanId={loan.id}
-                existingDocuments={loan.proofDocuments}
                 settled={loan.status === "settled"}
               />
             </div>
-            <DocumentGallery documents={loan.proofDocuments} />
+            <DocumentGallery 
+              loanId={loan.id} 
+              documents={loan.proofDocuments} 
+            />
           </Card>
         )}
       </div>

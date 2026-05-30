@@ -138,26 +138,72 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
             onChange={(e) => setPhone(e.target.value)}
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-slate-700">
-            Profile Photo
-          </label>
-          <div className="mt-1 flex items-center gap-4">
-            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-slate-100 border border-slate-200">
-              {photoPreview ? (
-                <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center">
-                  <UserPlus className="h-8 w-8 text-slate-300" />
-                </div>
-              )}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700">
+              Profile Photo
+            </label>
+            <div 
+              onClick={() => document.getElementById('profile-photo-input')?.click()}
+              className="group mt-2 flex cursor-pointer items-center gap-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 transition hover:border-emerald-500 hover:bg-emerald-50/30"
+            >
+              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-white bg-white shadow-sm ring-1 ring-slate-200">
+                {photoPreview ? (
+                  <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-slate-50 text-slate-300">
+                    <UserPlus className="h-8 w-8" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-slate-700 group-hover:text-emerald-700">
+                  {profilePhoto ? 'Change Photo' : 'Choose Photo'}
+                </p>
+                <p className="text-[10px] text-slate-500">
+                  {profilePhoto ? profilePhoto.name : 'JPG, PNG up to 5MB'}
+                </p>
+              </div>
+              <input
+                id="profile-photo-input"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
-              onChange={handlePhotoChange}
-            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700">
+              Proof Documents
+            </label>
+            <div 
+              onClick={() => document.getElementById('proof-docs-input')?.click()}
+              className="group mt-2 flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 transition hover:border-emerald-500 hover:bg-emerald-50/30"
+            >
+              <div className="flex items-center gap-2">
+                <div className="rounded-full bg-white p-2 shadow-sm ring-1 ring-slate-200">
+                  <Upload className="h-5 w-5 text-emerald-600" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-bold text-slate-700 group-hover:text-emerald-700">
+                    {proofFiles?.length ? `${proofFiles.length} files selected` : 'Select Documents'}
+                  </p>
+                  <p className="text-[10px] text-slate-500">
+                    Aadhar, PAN, Bond
+                  </p>
+                </div>
+              </div>
+              <input
+                id="proof-docs-input"
+                type="file"
+                multiple
+                accept="image/*,.pdf"
+                className="hidden"
+                onChange={(e) => setProofFiles(e.target.files)}
+              />
+            </div>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -187,22 +233,6 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
           onChange={(e) => setStartDate(e.target.value)}
           required
         />
-        <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-            <Upload className="h-4 w-4" />
-            Proof Documents (Aadhar, PAN, Bond)
-          </label>
-          <input
-            type="file"
-            multiple
-            accept="image/*,.pdf"
-            className="mt-1 block w-full text-sm text-slate-600"
-            onChange={(e) => setProofFiles(e.target.files)}
-          />
-          <p className="mt-1 text-xs text-slate-500">
-            Stored under loans/&#123;loanId&#125;/proofs/
-          </p>
-        </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         {success && (
           <p className="text-sm text-emerald-600">Member added successfully.</p>
