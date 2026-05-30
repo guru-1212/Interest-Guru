@@ -11,17 +11,20 @@ interface MemberCardProps {
   member: Member;
   loan?: Loan;
   payments?: Payment[];
+  paymentsLoaded?: boolean;
 }
 
 export function MemberCard({
   member,
   loan,
   payments = [],
+  paymentsLoaded = true,
 }: MemberCardProps) {
   const asOf = useInterestClock();
   const { payments: loanPayments, loading: loanPaymentsLoading } = usePayments(
     loan?.id
   );
+  const effectiveLoading = loanPaymentsLoading && !paymentsLoaded;
 
   const effectivePayments =
     loanPayments && loanPayments.length > 0 ? loanPayments : payments;
@@ -86,7 +89,7 @@ export function MemberCard({
                 <span className="text-lg font-extrabold text-emerald-600">
                   {loan.status === "settled" ? (
                     <span className="text-sm font-bold text-slate-400">Settled</span>
-                  ) : loanPaymentsLoading ? (
+                  ) : effectiveLoading ? (
                     <span className="text-sm font-medium text-slate-400">Loading…</span>
                   ) : balance ? (
                     formatCurrency(balance.grandTotal)
