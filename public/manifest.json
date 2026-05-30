@@ -1,18 +1,31 @@
 {
-  "name": "VyaajBook",
+  "name": "VyaajBook - Fintech Ledger",
   "short_name": "VyaajBook",
-  "description": "Shekda-based interest tracking ledger",
+  "description": "Professional Shekda-based interest tracking ledger for lenders and borrowers.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8fafc",
+  "background_color": "#ffffff",
   "theme_color": "#059669",
   "orientation": "portrait-primary",
+  "categories": ["finance", "productivity"],
   "icons": [
     {
       "src": "/window.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "/window.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/window.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }
