@@ -32,10 +32,25 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
   const [shekdaRate, setShekdaRate] = useState("");
   const [startDate, setStartDate] = useState("");
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [proofFiles, setProofFiles] = useState<FileList | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setProfilePhoto(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setPhotoPreview(null);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +85,7 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
       if (profilePhoto) {
         const photoRef = ref(
           storage,
-          `members/${memberRef.id}/profile_${profilePhoto.name}`
+          `members/${memberRef.id}/profile_${Date.now()}_${profilePhoto.name}`
         );
         await uploadBytes(photoRef, profilePhoto);
         profilePhotoUrl = await getDownloadURL(photoRef);
@@ -90,6 +105,7 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
       setShekdaRate("");
       setStartDate("");
       setProfilePhoto(null);
+      setPhotoPreview(null);
       setProofFiles(null);
       setSuccess(true);
       onSuccess?.();
@@ -126,12 +142,23 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
           <label className="block text-sm font-medium text-slate-700">
             Profile Photo
           </label>
-          <input
-            type="file"
-            accept="image/*"
-            className="mt-1 block w-full text-sm text-slate-600"
-            onChange={(e) => setProfilePhoto(e.target.files?.[0] ?? null)}
-          />
+          <div className="mt-1 flex items-center gap-4">
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full bg-slate-100 border border-slate-200">
+              {photoPreview ? (
+                <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <UserPlus className="h-8 w-8 text-slate-300" />
+                </div>
+              )}
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              className="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+              onChange={handlePhotoChange}
+            />
+          </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <Input

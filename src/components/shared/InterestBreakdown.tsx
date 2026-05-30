@@ -5,6 +5,7 @@ interface InterestBreakdownProps {
   breakdown: Breakdown;
   principal: number;
   shekdaRate: number;
+  capitalizedInterest?: number;
   compact?: boolean;
 }
 
@@ -12,6 +13,7 @@ export function InterestBreakdownDisplay({
   breakdown,
   principal,
   shekdaRate,
+  capitalizedInterest = 0,
   compact = false,
 }: InterestBreakdownProps) {
   const duration = formatDuration(
@@ -58,6 +60,18 @@ export function InterestBreakdownDisplay({
         <p className="text-lg font-semibold text-amber-700">
           {formatCurrency(breakdown.totalInterest)}
         </p>
+        {capitalizedInterest > 0 && (
+           <div className="mt-1 space-y-0.5 text-[10px] text-slate-500">
+             <div className="flex justify-between">
+               <span>Current:</span>
+               <span>{formatCurrency(breakdown.totalInterest - capitalizedInterest)}</span>
+             </div>
+             <div className="flex justify-between border-t border-slate-100 pt-0.5">
+               <span>Capitalized:</span>
+               <span>{formatCurrency(capitalizedInterest)}</span>
+             </div>
+           </div>
+        )}
       </div>
       <div className="col-span-full rounded-lg bg-slate-800 p-4 text-white sm:col-span-2">
         <p className="text-xs text-slate-300">Live balance (Grand Total)</p>

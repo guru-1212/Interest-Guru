@@ -77,6 +77,7 @@ export interface LoanBalance {
   principalPaid: number;
   interestPaid: number;
   accruedInterest: number;
+  capitalizedInterest: number;
   outstandingInterest: number;
   grandTotal: number;
   breakdown: InterestBreakdown;

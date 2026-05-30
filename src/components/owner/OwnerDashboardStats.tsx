@@ -30,9 +30,7 @@ export function OwnerDashboardStats({
     for (const loan of activeLoans) {
       const payments = paymentsByLoan[loan.id] ?? [];
       const balance = computeLoanBalance(
-        loan.principal,
-        loan.shekdaRate,
-        loan.startDate,
+        loan,
         payments,
         asOf
       );

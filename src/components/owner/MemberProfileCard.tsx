@@ -19,10 +19,12 @@ export function MemberProfileCard({ member, loanStatus }: MemberProfileCardProps
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [photoUrl, setPhotoUrl] = useState(member.profilePhotoUrl);
+  const [prevPhotoUrl, setPrevPhotoUrl] = useState(member.profilePhotoUrl);
   const [prevMemberId, setPrevMemberId] = useState(member.id);
 
-  if (member.id !== prevMemberId) {
+  if (member.id !== prevMemberId || member.profilePhotoUrl !== prevPhotoUrl) {
     setPrevMemberId(member.id);
+    setPrevPhotoUrl(member.profilePhotoUrl);
     setPhotoUrl(member.profilePhotoUrl);
   }
 
@@ -62,20 +64,18 @@ export function MemberProfileCard({ member, loanStatus }: MemberProfileCardProps
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={uploading}
-          className="group relative h-28 w-28 shrink-0 overflow-hidden rounded-full border-2 border-dashed border-slate-300 bg-slate-100 transition hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+          className="group relative h-32 w-32 shrink-0 overflow-hidden rounded-full border-2 border-dashed border-slate-300 bg-slate-100 transition hover:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
           title="Click to add or change profile photo"
         >
           {photoUrl ? (
-            <Image
+            <img
               src={photoUrl}
               alt={member.fullName}
-              fill
-              className="object-cover"
-              unoptimized
+              className="h-full w-full object-cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center">
-              <User className="h-12 w-12 text-slate-400" />
+              <User className="h-14 w-14 text-slate-400" />
             </div>
           )}
           <span className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/0 transition group-hover:bg-slate-900/50">

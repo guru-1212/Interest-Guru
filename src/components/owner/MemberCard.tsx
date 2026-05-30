@@ -26,9 +26,7 @@ export function MemberCard({
   const balance =
     loan && loan.status === "active"
       ? computeLoanBalance(
-          loan.principal,
-          loan.shekdaRate,
-          loan.startDate,
+          loan,
           payments,
           asOf
         )
@@ -43,22 +41,20 @@ export function MemberCard({
       >
         <div className={`flex items-start gap-3 ${compact ? "" : "gap-4"}`}>
           <div
-            className={`relative shrink-0 overflow-hidden rounded-full bg-slate-100 ${
-              compact ? "h-10 w-10" : "h-14 w-14"
+            className={`relative shrink-0 overflow-hidden rounded-full bg-slate-100 border border-slate-200 ${
+              compact ? "h-12 w-12" : "h-16 w-16"
             }`}
           >
             {member.profilePhotoUrl ? (
-              <Image
+              <img
                 src={member.profilePhotoUrl}
                 alt={member.fullName}
-                fill
-                className="object-cover"
-                unoptimized
+                className="h-full w-full object-cover"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
                 <User
-                  className={`text-slate-400 ${compact ? "h-5 w-5" : "h-7 w-7"}`}
+                  className={`text-slate-400 ${compact ? "h-6 w-6" : "h-8 w-8"}`}
                 />
               </div>
             )}

@@ -1,11 +1,14 @@
 "use client";
 
-import Image from "next/image";
 import { FileText, ExternalLink } from "lucide-react";
 import type { ProofDocument } from "@/types";
 
 interface DocumentGalleryProps {
   documents: ProofDocument[];
+}
+
+function isImageUrl(url: string) {
+  return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url.split("?")[0]);
 }
 
 export function DocumentGallery({ documents }: DocumentGalleryProps) {
@@ -18,7 +21,7 @@ export function DocumentGallery({ documents }: DocumentGalleryProps) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {documents.map((doc) => {
-        const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(doc.url);
+        const isImage = isImageUrl(doc.url) || isImageUrl(doc.name);
         return (
           <a
             key={doc.id}
@@ -29,12 +32,11 @@ export function DocumentGallery({ documents }: DocumentGalleryProps) {
           >
             <div className="relative aspect-video bg-slate-100">
               {isImage ? (
-                <Image
+                <img
                   src={doc.url}
                   alt={doc.name}
-                  fill
-                  className="object-cover transition group-hover:scale-105"
-                  unoptimized
+                  loading="lazy"
+                  className="h-full w-full object-cover transition group-hover:scale-105"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center">

@@ -48,9 +48,7 @@ export default function MemberDetailPage({
   const balance =
     loan && loan.status === "active"
       ? computeLoanBalance(
-          loan.principal,
-          loan.shekdaRate,
-          loan.startDate,
+          loan,
           payments,
           asOf
         )
@@ -83,6 +81,7 @@ export default function MemberDetailPage({
               breakdown={balance.breakdown}
               principal={balance.effectivePrincipal}
               shekdaRate={loan.shekdaRate}
+              capitalizedInterest={balance.capitalizedInterest}
             />
             {(balance.principalPaid > 0 || balance.interestPaid > 0) && (
               <p className="mt-4 text-sm text-slate-600">
@@ -153,10 +152,12 @@ export default function MemberDetailPage({
           />
         )}
 
-        {loan && balance && (
+        {loan && balance && member && (
           <CapitalizeInterestModal
+            member={member}
             loan={loan}
             balance={balance}
+            payments={payments}
             open={capitalizeOpen}
             onClose={() => setCapitalizeOpen(false)}
           />
