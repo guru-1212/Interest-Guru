@@ -1,10 +1,13 @@
 import { formatCurrency, formatDuration } from "@/lib/calculations";
-import type { InterestBreakdown as Breakdown } from "@/types";
+import type { InterestBreakdown as Breakdown, InterestMethod, CompoundFrequency } from "@/types";
 
 interface InterestBreakdownProps {
   breakdown: Breakdown;
   principal: number;
-  shekdaRate: number;
+  method?: InterestMethod;
+  shekdaRate?: number;
+  annualRate?: number;
+  frequency?: CompoundFrequency;
   capitalizedInterest?: number;
   compact?: boolean;
 }
@@ -12,7 +15,10 @@ interface InterestBreakdownProps {
 export function InterestBreakdownDisplay({
   breakdown,
   principal,
-  shekdaRate,
+  method = "shekda_simple",
+  shekdaRate = 0,
+  annualRate = 0,
+  frequency = "quarterly",
   capitalizedInterest = 0,
   compact = false,
 }: InterestBreakdownProps) {
@@ -21,6 +27,9 @@ export function InterestBreakdownDisplay({
     breakdown.months,
     breakdown.days
   );
+
+  const isFD = method.startsWith("fd");
+  const isCompound = method.includes("compound");
 
   if (compact) {
     return (
@@ -43,18 +52,30 @@ export function InterestBreakdownDisplay({
           {breakdown.years}y · {breakdown.months}m · {breakdown.days}d
         </p>
       </div>
+
       <div className="rounded-lg bg-emerald-50 p-4">
         <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
-          Shekda @ {shekdaRate}% / month
+          {isFD ? `Bank FD @ ${annualRate}% / year` : `Shekda @ ${shekdaRate}% / month`}
         </p>
-        <p className="mt-1 text-sm text-emerald-800">
-          Monthly interest: {formatCurrency(breakdown.monthlyInterest)}
+        <p className="mt-1 text-sm text-emerald-800 font-medium">
+          {isCompound ? (
+            <span className="flex items-center gap-1">
+              Compounded {frequency.replace("_", " ")}
+            </span>
+          ) : (
+            "Simple Interest"
+          )}
+        </p>
+        <p className="mt-0.5 text-xs text-emerald-600">
+          Monthly average: {formatCurrency(breakdown.monthlyInterest)}
         </p>
       </div>
+
       <div className="rounded-lg border border-slate-200 p-4">
-        <p className="text-xs text-slate-500">Principal</p>
+        <p className="text-xs text-slate-500">Opening Principal</p>
         <p className="text-lg font-semibold">{formatCurrency(principal)}</p>
       </div>
+
       <div className="rounded-lg border border-slate-200 p-4">
         <p className="text-xs text-slate-500">Total interest</p>
         <p className="text-lg font-semibold text-amber-700">
@@ -73,6 +94,7 @@ export function InterestBreakdownDisplay({
            </div>
         )}
       </div>
+
       <div className="col-span-full rounded-lg bg-slate-800 p-4 text-white sm:col-span-2">
         <p className="text-xs text-slate-300">Live balance (Grand Total)</p>
         <p className="text-2xl font-bold text-emerald-400">

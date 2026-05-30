@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Image from "next/image";
 import { doc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Camera, User } from "lucide-react";
@@ -11,7 +10,7 @@ import type { Member } from "@/types";
 
 interface MemberProfileCardProps {
   member: Member;
-  loanStatus?: "active" | "settled";
+  loanStatus?: "active" | "settled" | "wrong_entry";
 }
 
 export function MemberProfileCard({ member, loanStatus }: MemberProfileCardProps) {
@@ -105,13 +104,15 @@ export function MemberProfileCard({ member, loanStatus }: MemberProfileCardProps
           )}
           {loanStatus && (
             <span
-              className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${
+              className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider ${
                 loanStatus === "active"
-                  ? "bg-emerald-100 text-emerald-800"
-                  : "bg-slate-200 text-slate-600"
+                  ? "bg-emerald-50 text-emerald-600"
+                  : loanStatus === "wrong_entry"
+                  ? "bg-amber-50 text-amber-600"
+                  : "bg-slate-100 text-slate-500"
               }`}
             >
-              Loan {loanStatus === "active" ? "Active" : "Settled"}
+              {loanStatus === "active" ? "Active Loan" : loanStatus === "wrong_entry" ? "Wrong Entry (Archived)" : "Settled"}
             </span>
           )}
           <p className="mt-3 text-sm text-emerald-700">

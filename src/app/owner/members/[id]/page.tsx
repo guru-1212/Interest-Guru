@@ -20,6 +20,7 @@ import { AddPaymentForm } from "@/components/owner/AddPaymentForm";
 import { PaymentsList } from "@/components/owner/PaymentsList";
 import { SettleLoanModal } from "@/components/owner/SettleLoanModal";
 import { CapitalizeInterestModal } from "@/components/owner/CapitalizeInterestModal";
+import { MarkWrongEntryModal } from "@/components/owner/MarkWrongEntryModal";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { RefreshCcw, TrendingUp } from "lucide-react";
@@ -80,7 +81,10 @@ export default function MemberDetailPage({
             <InterestBreakdownDisplay
               breakdown={balance.breakdown}
               principal={balance.effectivePrincipal}
+              method={loan.interestMethod}
               shekdaRate={loan.shekdaRate}
+              annualRate={loan.annualRate}
+              frequency={loan.compoundFrequency}
               capitalizedInterest={balance.capitalizedInterest}
             />
             {(balance.principalPaid > 0 || balance.interestPaid > 0) && (
@@ -203,6 +207,15 @@ export default function MemberDetailPage({
               documents={loan.proofDocuments} 
             />
           </Card>
+        )}
+
+        {member && (
+          <div className="mt-12 flex justify-center border-t border-slate-100 pt-8">
+            <MarkWrongEntryModal 
+              memberId={member.id} 
+              memberName={member.fullName} 
+            />
+          </div>
         )}
       </div>
     </ProtectedRoute>

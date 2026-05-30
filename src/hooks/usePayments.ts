@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, collectionGroup, onSnapshot, query, where } from "firebase/firestore";
+import { collection, collectionGroup, onSnapshot, query, where, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { paymentFromDoc } from "@/lib/firestore-helpers";
 import type { Payment } from "@/types";
@@ -75,4 +75,8 @@ export function useAllOwnerPayments(ownerId: string | undefined) {
   }, [ownerId]);
 
   return { payments, loading };
+}
+
+export async function deletePayment(loanId: string, paymentId: string) {
+  await deleteDoc(doc(db, "loans", loanId, "payments", paymentId));
 }

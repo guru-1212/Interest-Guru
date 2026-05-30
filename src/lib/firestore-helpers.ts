@@ -2,7 +2,7 @@ import {
   Timestamp,
   type DocumentData,
 } from "firebase/firestore";
-import type { Loan, Member, Payment, ProofDocument, User } from "@/types";
+import type { Loan, Member, Payment, ProofDocument, User, InterestMethod, CompoundFrequency } from "@/types";
 
 export function timestampToDate(value: unknown): Date {
   if (value instanceof Timestamp) return value.toDate();
@@ -57,6 +57,16 @@ export function loanFromDoc(id: string, data: DocumentData): Loan {
       ...c,
       date: timestampToDate(c.date),
     })),
+    withdrawalHistory: (data.withdrawalHistory ?? []).map((w: { id: string; withdrawnAt: unknown; amount: number; note?: string }) => ({
+      ...w,
+      withdrawnAt: timestampToDate(w.withdrawnAt),
+    })),
+    originalPrincipal: data.originalPrincipal,
+    interestMethod: data.interestMethod as InterestMethod | undefined,
+    annualRate: data.annualRate,
+    compoundFrequency: data.compoundFrequency as CompoundFrequency | undefined,
+    maturityDate: data.maturityDate ? timestampToDate(data.maturityDate) : undefined,
+    autoGenerateEntries: data.autoGenerateEntries,
   };
 }
 

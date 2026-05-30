@@ -5,18 +5,15 @@ import {
   addDoc,
   collection,
   serverTimestamp,
-  updateDoc,
-  doc,
   Timestamp,
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { auth, db, storage } from "@/lib/firebase";
-import { uploadProofDocuments } from "@/lib/proof-documents";
+import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { UserPlus, Upload } from "lucide-react";
+import { UserPlus, Calculator } from "lucide-react";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
+import type { InterestMethod, CompoundFrequency } from "@/types";
 
 interface AddMemberFormProps {
   onSuccess?: () => void;
@@ -31,26 +28,15 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
   const [principal, setPrincipal] = useState("");
   const [shekdaRate, setShekdaRate] = useState("");
   const [startDate, setStartDate] = useState("");
-  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [proofFiles, setProofFiles] = useState<FileList | null>(null);
+  const [status, setStatus] = useState<"active" | "settled">("active");
+  const [endDate, setEndDate] = useState("");
+  const [interestMethod, setInterestMethod] = useState<InterestMethod>("shekda_simple");
+  const [annualRate, setAnnualRate] = useState("");
+  const [compoundFrequency, setCompoundFrequency] = useState<CompoundFrequency>("quarterly");
+  const [maturityDate, setMaturityDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
-    setProfilePhoto(file);
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setPhotoPreview(null);
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,34 +55,35 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
         createdAt: serverTimestamp(),
       });
 
-      const loanRef = await addDoc(collection(db, "loans"), {
+      const loanData: Record<string, unknown> = {
         memberId: memberRef.id,
         ownerId,
         principal: parseFloat(principal),
-        shekdaRate: parseFloat(shekdaRate),
+        shekdaRate: shekdaRate ? parseFloat(shekdaRate) : 0,
         startDate: Timestamp.fromDate(new Date(startDate)),
+        interestMethod,
         proofDocuments: [],
-        status: "active",
+        status,
         createdAt: serverTimestamp(),
+      };
+
+      if (status === "settled" && endDate) {
+        loanData.settledAt = Timestamp.fromDate(new Date(endDate));
+        loanData.settlementAmount = parseFloat(principal); 
+        loanData.settlementNote = "Historical data entry";
+      }
+
+      if (interestMethod === "fd_compound" || interestMethod === "fd_payout") {
+        loanData.annualRate = parseFloat(annualRate);
+        loanData.compoundFrequency = compoundFrequency;
+        if (maturityDate) {
+          loanData.maturityDate = Timestamp.fromDate(new Date(maturityDate));
+        }
+      }
+
+      await addDoc(collection(db, "loans"), {
+        ...loanData
       });
-
-      let profilePhotoUrl: string | undefined;
-
-      if (profilePhoto) {
-        const photoRef = ref(
-          storage,
-          `members/${memberRef.id}/profile_${Date.now()}_${profilePhoto.name}`
-        );
-        await uploadBytes(photoRef, profilePhoto);
-        profilePhotoUrl = await getDownloadURL(photoRef);
-        await updateDoc(doc(db, "members", memberRef.id), {
-          profilePhotoUrl,
-        });
-      }
-
-      if (proofFiles?.length) {
-        await uploadProofDocuments(loanRef.id, proofFiles);
-      }
 
       setFullName("");
       setEmail("");
@@ -104,9 +91,11 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
       setPrincipal("");
       setShekdaRate("");
       setStartDate("");
-      setProfilePhoto(null);
-      setPhotoPreview(null);
-      setProofFiles(null);
+      setEndDate("");
+      setStatus("active");
+      setInterestMethod("shekda_simple");
+      setAnnualRate("");
+      setMaturityDate("");
       setSuccess(true);
       onSuccess?.();
     } catch (err) {
@@ -138,74 +127,67 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
             onChange={(e) => setPhone(e.target.value)}
           />
         </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700">
-              Profile Photo
-            </label>
-            <div 
-              onClick={() => document.getElementById('profile-photo-input')?.click()}
-              className="group mt-2 flex cursor-pointer items-center gap-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 transition hover:border-emerald-500 hover:bg-emerald-50/30"
-            >
-              <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-2 border-white bg-white shadow-sm ring-1 ring-slate-200">
-                {photoPreview ? (
-                  <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-slate-50 text-slate-300">
-                    <UserPlus className="h-8 w-8" />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="text-xs font-bold text-slate-700 group-hover:text-emerald-700">
-                  {profilePhoto ? 'Change Photo' : 'Choose Photo'}
-                </p>
-                <p className="text-[10px] text-slate-500">
-                  {profilePhoto ? profilePhoto.name : 'JPG, PNG up to 5MB'}
-                </p>
-              </div>
-              <input
-                id="profile-photo-input"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handlePhotoChange}
-              />
-            </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-slate-700">
-              Proof Documents
-            </label>
-            <div 
-              onClick={() => document.getElementById('proof-docs-input')?.click()}
-              className="group mt-2 flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 p-3 transition hover:border-emerald-500 hover:bg-emerald-50/30"
+        {/* Loan Status Selection */}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-slate-700">
+            Loan Status
+          </label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setStatus("active")}
+              className={`flex-1 rounded-xl border px-3 py-2 text-xs font-bold uppercase transition-all ${
+                status === "active"
+                  ? "border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+              }`}
             >
-              <div className="flex items-center gap-2">
-                <div className="rounded-full bg-white p-2 shadow-sm ring-1 ring-slate-200">
-                  <Upload className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-xs font-bold text-slate-700 group-hover:text-emerald-700">
-                    {proofFiles?.length ? `${proofFiles.length} files selected` : 'Select Documents'}
-                  </p>
-                  <p className="text-[10px] text-slate-500">
-                    Aadhar, PAN, Bond
-                  </p>
-                </div>
-              </div>
-              <input
-                id="proof-docs-input"
-                type="file"
-                multiple
-                accept="image/*,.pdf"
-                className="hidden"
-                onChange={(e) => setProofFiles(e.target.files)}
-              />
-            </div>
+              Current Active
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatus("settled")}
+              className={`flex-1 rounded-xl border px-3 py-2 text-xs font-bold uppercase transition-all ${
+                status === "settled"
+                  ? "border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+              }`}
+            >
+              Old Completed
+            </button>
           </div>
         </div>
+
+        {/* Calculation Method Selection */}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-slate-700">
+            Calculation Method
+          </label>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[
+              { id: "shekda_simple", label: "Shekda Simple" },
+              { id: "shekda_compound", label: "Shekda Compound" },
+              { id: "fd_compound", label: "Bank FD (Compound)" },
+              { id: "fd_payout", label: "Bank FD (Payout)" },
+            ].map((method) => (
+              <button
+                key={method.id}
+                type="button"
+                onClick={() => setInterestMethod(method.id as InterestMethod)}
+                className={`flex flex-col items-center justify-center rounded-xl border p-2 text-center transition-all ${
+                  interestMethod === method.id
+                    ? "border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                <Calculator className={`h-4 w-4 mb-1 ${interestMethod === method.id ? "text-emerald-600" : "text-slate-400"}`} />
+                <span className="text-[10px] font-bold uppercase leading-tight">{method.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
             label="Principal Amount (₹)"
@@ -216,23 +198,75 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
             onChange={(e) => setPrincipal(e.target.value)}
             required
           />
+          
+          {interestMethod.startsWith("shekda") ? (
+            <Input
+              label="Shekda Rate (% per month)"
+              type="number"
+              min="0"
+              step="0.01"
+              value={shekdaRate}
+              onChange={(e) => setShekdaRate(e.target.value)}
+              required
+            />
+          ) : (
+            <Input
+              label="Annual Interest Rate (%)"
+              type="number"
+              min="0"
+              step="0.01"
+              value={annualRate}
+              onChange={(e) => setAnnualRate(e.target.value)}
+              required
+            />
+          )}
+        </div>
+
+        {interestMethod.startsWith("fd") && (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <label className="block text-sm font-medium text-slate-700">
+                Compounding Frequency
+              </label>
+              <select
+                value={compoundFrequency}
+                onChange={(e) => setCompoundFrequency(e.target.value as CompoundFrequency)}
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+              >
+                <option value="monthly">Monthly</option>
+                <option value="quarterly">Quarterly</option>
+                <option value="half-yearly">Half-Yearly</option>
+                <option value="yearly">Yearly</option>
+                <option value="at_maturity">At Maturity</option>
+              </select>
+            </div>
+            <Input
+              label="Maturity Date (Optional)"
+              type="date"
+              value={maturityDate}
+              onChange={(e) => setMaturityDate(e.target.value)}
+            />
+          </div>
+        )}
+
+        <div className="grid gap-4 sm:grid-cols-2">
           <Input
-            label="Shekda Rate (% per month)"
-            type="number"
-            min="0"
-            step="0.01"
-            value={shekdaRate}
-            onChange={(e) => setShekdaRate(e.target.value)}
+            label="Start Date"
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
             required
           />
+          {status === "settled" && (
+            <Input
+              label="End Date (Settled On)"
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              required
+            />
+          )}
         </div>
-        <Input
-          label="Start Date"
-          type="date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-          required
-        />
         {error && <p className="text-sm text-red-600">{error}</p>}
         {success && (
           <p className="text-sm text-emerald-600">Member added successfully.</p>

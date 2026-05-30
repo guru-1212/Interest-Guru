@@ -12,9 +12,14 @@ import type { Payment } from "@/types";
 interface MemberListProps {
   paymentsByLoan?: Record<string, Payment[]>;
   paymentsLoading?: boolean;
+  statusFilter?: "active" | "settled" | "wrong_entry";
 }
 
-export function MemberList({ paymentsByLoan = {}, paymentsLoading = false }: MemberListProps) {
+export function MemberList({ 
+  paymentsByLoan = {}, 
+  paymentsLoading = false,
+  statusFilter
+}: MemberListProps) {
   const { user } = useAuth();
   const { members, loading: membersLoading } = useMembers(user?.id);
   const { loans, loading: loansLoading } = useOwnerLoans(user?.id);
@@ -57,6 +62,21 @@ export function MemberList({ paymentsByLoan = {}, paymentsLoading = false }: Mem
 
   const loanByMember = new Map(loans.map((l) => [l.memberId, l]));
 
+  const filteredMembers = members.filter((member) => {
+    const loan = loanByMember.get(member.id);
+    if (!statusFilter) return true;
+    if (!loan) return statusFilter === "active"; 
+    return loan.status === statusFilter;
+  });
+
+  if (filteredMembers.length === 0) {
+    return (
+      <p className="rounded-xl border border-dashed border-slate-200 bg-white py-12 text-center text-slate-400 text-sm font-medium">
+        No {statusFilter === "settled" ? "completed" : "active"} loans found.
+      </p>
+    );
+  }
+
   return (
     <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <div className="mb-3 flex items-center justify-between md:hidden">
@@ -77,7 +97,7 @@ export function MemberList({ paymentsByLoan = {}, paymentsLoading = false }: Mem
           refreshing ? "opacity-60" : ""
         }`}
       >
-        {members.map((member) => {
+        {filteredMembers.map((member) => {
           const loan = loanByMember.get(member.id);
           return (
             <MemberCard

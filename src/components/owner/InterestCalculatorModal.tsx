@@ -1,16 +1,19 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Calculator, Calendar, Landmark, Percent } from "lucide-react";
+import { Calculator, Calendar, Landmark, Percent, RefreshCw } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { calculateInterest, formatCurrency, formatDuration } from "@/lib/calculations";
+import type { InterestMethod, CompoundFrequency } from "@/types";
 
 export function InterestCalculatorModal() {
   const [isOpen, setIsOpen] = useState(false);
+  const [method, setMethod] = useState<InterestMethod>("shekda_simple");
   const [principal, setPrincipal] = useState<string>("");
-  const [shekdaRate, setShekdaRate] = useState<string>("");
+  const [rate, setRate] = useState<string>("");
+  const [frequency, setFrequency] = useState<CompoundFrequency>("quarterly");
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -20,7 +23,7 @@ export function InterestCalculatorModal() {
 
   const results = useMemo(() => {
     const p = parseFloat(principal);
-    const r = parseFloat(shekdaRate);
+    const r = parseFloat(rate);
     const start = new Date(startDate);
     const end = new Date(asOf);
 
@@ -28,12 +31,21 @@ export function InterestCalculatorModal() {
       return null;
     }
 
-    return calculateInterest(p, r, start, end);
-  }, [principal, shekdaRate, startDate, asOf]);
+    return calculateInterest(
+      {
+        principal: p,
+        startDate: start,
+        method: method,
+        shekdaRate: method.startsWith("shekda") ? r : 0,
+        annualRate: method.startsWith("fd") ? r : 0,
+        frequency: frequency,
+      },
+      end
+    );
+  }, [principal, rate, startDate, asOf, method, frequency]);
 
   const handleClose = () => {
     setIsOpen(false);
-    // Reset fields if desired, but keeping them might be useful for quick adjustments
   };
 
   return (
@@ -49,24 +61,69 @@ export function InterestCalculatorModal() {
 
       <Modal open={isOpen} onClose={handleClose} title="Quick Interest Calculator">
         <div className="space-y-6">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            {[
+              { id: "shekda_simple", label: "Shekda Simple" },
+              { id: "shekda_compound", label: "Shekda Compound" },
+              { id: "fd_compound", label: "Bank FD" },
+            ].map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setMethod(m.id as InterestMethod)}
+                className={`shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition-all ${
+                  method === m.id
+                    ? "bg-emerald-600 text-white"
+                    : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Input
               label="Principal Amount"
               type="number"
-              placeholder="e.g. 10000"
+              placeholder="e.g. 100000"
               value={principal}
               onChange={(e) => setPrincipal(e.target.value)}
               icon={<Landmark className="h-4 w-4 text-slate-400" />}
             />
             <Input
-              label="Shekda Rate (Monthly %)"
+              label={method.startsWith("fd") ? "Annual Rate (%)" : "Shekda Rate (Monthly %)"}
               type="number"
               step="0.01"
-              placeholder="e.g. 2.0"
-              value={shekdaRate}
-              onChange={(e) => setShekdaRate(e.target.value)}
+              placeholder="e.g. 8.4"
+              value={rate}
+              onChange={(e) => setRate(e.target.value)}
               icon={<Percent className="h-4 w-4 text-slate-400" />}
             />
+
+            {method === "fd_compound" && (
+              <div className="space-y-1">
+                <label className="block text-sm font-medium text-slate-700">
+                  Compounding Frequency
+                </label>
+                <div className="relative">
+                   <div className="absolute left-3 top-1/2 -translate-y-1/2">
+                    <RefreshCw className="h-4 w-4 text-slate-400" />
+                   </div>
+                  <select
+                    value={frequency}
+                    onChange={(e) => setFrequency(e.target.value as CompoundFrequency)}
+                    className="w-full rounded-lg border border-slate-300 bg-white pl-10 pr-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  >
+                    <option value="monthly">Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="half-yearly">Half-Yearly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
             <Input
               label="Start Date"
               type="date"
@@ -119,13 +176,15 @@ export function InterestCalculatorModal() {
                 </div>
               </div>
 
-              <p className="mt-4 text-center text-[10px] text-slate-400">
-                * Based on monthly shekda rate (30 days per month for partial calculation).
+              <p className="mt-4 text-center text-[10px] text-slate-400 italic leading-relaxed">
+                * {method === "shekda_simple" ? "Simple monthly interest (30 days/month)" : 
+                  method === "shekda_compound" ? "Compounded monthly" : 
+                  `FD Compounded ${frequency.replace("_", " ")}`}
               </p>
             </div>
           )}
 
-          {!results && (principal || shekdaRate) && (
+          {!results && (principal || rate) && (
             <div className="rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-500 italic">
               Please enter valid values to see the calculation.
             </div>
@@ -138,7 +197,7 @@ export function InterestCalculatorModal() {
             <Button 
               onClick={() => {
                 setPrincipal("");
-                setShekdaRate("");
+                setRate("");
                 setStartDate(new Date().toISOString().split("T")[0]);
                 setAsOf(new Date().toISOString().split("T")[0]);
               }}

@@ -56,7 +56,10 @@ export default function MemberDashboardPage() {
               <InterestBreakdownDisplay
                 breakdown={balance.breakdown}
                 principal={balance.effectivePrincipal}
+                method={loan.interestMethod}
                 shekdaRate={loan.shekdaRate}
+                annualRate={loan.annualRate}
+                frequency={loan.compoundFrequency}
                 capitalizedInterest={balance.capitalizedInterest}
               />
               {(balance.principalPaid > 0 || balance.interestPaid > 0) && (

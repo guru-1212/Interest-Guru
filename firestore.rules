@@ -20,7 +20,8 @@ service cloud.firestore {
     }
 
     function isApprovedOwner() {
-      return isOwner();
+      return isOwner() && (userDoc().data.isApproved == true || userDoc().data.role == 'owner'); 
+      // Note: role == 'owner' check is a fallback in case isApproved is missing but they are owners
     }
 
     function isMember() {
@@ -82,7 +83,8 @@ service cloud.firestore {
           && request.resource.data.ownerId == request.auth.uid
           && request.resource.data.loanId == loanId;
         allow update, delete: if isApprovedOwner()
-          && resource.data.ownerId == request.auth.uid;
+          && (resource.data.ownerId == request.auth.uid 
+              || get(/databases/$(database)/documents/loans/$(loanId)).data.ownerId == request.auth.uid);
       }
     }
   }

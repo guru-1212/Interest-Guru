@@ -10,10 +10,12 @@ import { ExportDataPanel } from "@/components/owner/ExportDataPanel";
 import { useAuth } from "@/hooks/useAuth";
 import { useAllOwnerPayments } from "@/hooks/usePayments";
 import type { Payment } from "@/types";
+import { useState } from "react";
 
 export default function OwnerDashboardPage() {
   const { user } = useAuth();
   const { payments, loading: paymentsLoading } = useAllOwnerPayments(user?.id);
+  const [activeTab, setActiveTab] = useState<"active" | "settled" | "wrong_entry">("active");
 
   const paymentsByLoan = useMemo(() => {
     const map: Record<string, Payment[]> = {};
@@ -51,13 +53,34 @@ export default function OwnerDashboardPage() {
         </section>
 
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-              All Members
-              <span className="text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Live</span>
-            </h2>
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+            <div className="flex gap-4 sm:gap-8 overflow-x-auto no-scrollbar">
+              {[
+                { id: "active", label: "Active" },
+                { id: "settled", label: "Completed" },
+                { id: "wrong_entry", label: "Wrong Entry" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as "active" | "settled" | "wrong_entry")}
+                  className={`whitespace-nowrap text-base sm:text-xl font-bold transition-all ${
+                    activeTab === tab.id 
+                      ? "text-slate-900 underline decoration-emerald-500 decoration-4 underline-offset-8" 
+                      : "text-slate-400 hover:text-slate-600"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <span className="hidden sm:inline-flex text-xs font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">Live</span>
           </div>
-          <MemberList paymentsByLoan={paymentsByLoan} paymentsLoading={paymentsLoading} />
+
+          <MemberList 
+            paymentsByLoan={paymentsByLoan} 
+            paymentsLoading={paymentsLoading} 
+            statusFilter={activeTab}
+          />
         </div>
       </div>
     </ProtectedRoute>
