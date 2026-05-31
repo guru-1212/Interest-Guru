@@ -26,6 +26,7 @@ export function MemberList({
   const [refreshing, setRefreshing] = useState(false);
   const [pullStart, setPullStart] = useState<number | null>(null);
   const [viewFilter, setViewFilter] = useState<"all" | "given" | "taken">("all");
+  const [interestFilter, setInterestFilter] = useState<"all" | "with_interest" | "interest_free">("all");
 
   const loading = membersLoading || loansLoading;
 
@@ -78,6 +79,13 @@ export function MemberList({
       if (direction !== viewFilter) return false;
     }
 
+    // 3. Interest Type Filter (With Interest / Interest Free)
+    if (interestFilter !== "all") {
+      const isFree = loan?.interestMethod === "no_interest" || (loan && !loan.interestMethod && loan.shekdaRate === 0);
+      if (interestFilter === "interest_free" && !isFree) return false;
+      if (interestFilter === "with_interest" && isFree) return false;
+    }
+
     return true;
   });
 
@@ -124,38 +132,63 @@ export function MemberList({
 
   return (
     <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        {/* Professional Toggle Switch */}
-        <div className="inline-flex rounded-xl bg-slate-100 p-1 shadow-inner">
-          {[
-            { id: "all", label: "All Records", icon: null },
-            { id: "given", label: "Given (Assets)", icon: <ArrowUpCircle className="h-3 w-3" /> },
-            { id: "taken", label: "Taken (Debts)", icon: <ArrowDownCircle className="h-3 w-3" /> },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setViewFilter(tab.id as any)}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all ${
-                viewFilter === tab.id
-                  ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200/50"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* Direction Filter */}
+          <div className="inline-flex rounded-xl bg-slate-100 p-1 shadow-inner">
+            {[
+              { id: "all", label: "All Records" },
+              { id: "given", label: "Given (Assets)" },
+              { id: "taken", label: "Taken (Debts)" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setViewFilter(tab.id as any)}
+                className={`rounded-lg px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all ${
+                  viewFilter === tab.id
+                    ? "bg-white text-emerald-700 shadow-sm ring-1 ring-slate-200/50"
+                    : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-4">
+            <p className="hidden text-xs text-slate-500 md:block font-medium">Auto-calculated live data</p>
+            <Button
+              variant="ghost"
+              className="min-h-[40px] min-w-[44px] px-2"
+              onClick={handleRefresh}
             >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
+              <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin text-emerald-600" : ""}`} />
+            </Button>
+          </div>
         </div>
 
-        <div className="flex items-center justify-between gap-4 md:gap-6">
-          <p className="hidden text-xs text-slate-500 md:block">Auto-calculated live data</p>
-          <Button
-            variant="ghost"
-            className="min-h-[44px] min-w-[44px] px-2"
-            onClick={handleRefresh}
-          >
-            <RefreshCw className={`h-5 w-5 ${refreshing ? "animate-spin text-emerald-600" : ""}`} />
-          </Button>
+        {/* Interest Type Filter */}
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Rate Filter:</span>
+          <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1">
+            {[
+              { id: "all", label: "All Rates" },
+              { id: "with_interest", label: "With Interest" },
+              { id: "interest_free", label: "Interest Free" },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setInterestFilter(tab.id as any)}
+                className={`rounded-md px-3 py-1 text-[9px] font-black uppercase tracking-tighter transition-all ${
+                  interestFilter === tab.id
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-500 hover:bg-slate-50"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -170,9 +203,9 @@ export function MemberList({
       {filteredMembers.length === 0 && (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white py-16 text-center">
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">
-            No {viewFilter !== 'all' ? viewFilter : ''} entries found
+            No {viewFilter !== 'all' ? viewFilter : ''} {interestFilter !== 'all' ? interestFilter.replace('_', ' ') : ''} entries found
           </p>
-          <p className="mt-1 text-xs text-slate-400">Try adding a new member above.</p>
+          <p className="mt-1 text-xs text-slate-400">Try changing your filters or adding a new member.</p>
         </div>
       )}
     </div>
