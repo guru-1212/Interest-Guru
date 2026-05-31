@@ -102,7 +102,17 @@ export function MemberCard({
             </h3>
             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-medium text-slate-400">
                <span className="bg-slate-50 px-1.5 py-0.5 rounded text-slate-500">Date: {loan?.startDate.toLocaleDateString('en-IN')}</span>
-               <span className="bg-slate-50 px-1.5 py-0.5 rounded text-slate-500">Day: {daysElapsed}</span>
+               <span className="bg-slate-50 px-1.5 py-0.5 rounded text-slate-500">
+                 {balance?.breakdown ? (
+                   <>
+                     {balance.breakdown.years > 0 && `${balance.breakdown.years}y `}
+                     {balance.breakdown.months > 0 && `${balance.breakdown.months}m `}
+                     {balance.breakdown.days}d
+                   </>
+                 ) : (
+                   `Day: ${daysElapsed}`
+                 )}
+               </span>
                {loan?.givenBy && <span className="bg-slate-50 px-1.5 py-0.5 rounded text-slate-600 font-semibold border border-slate-100">👤 {loan.givenBy}</span>}
             </div>
           </div>
