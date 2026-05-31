@@ -5,15 +5,19 @@ import {
   addDoc,
   collection,
   serverTimestamp,
+  updateDoc,
+  doc,
   Timestamp,
 } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { auth, db, storage } from "@/lib/firebase";
+import { uploadProofDocuments } from "@/lib/proof-documents";
 import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { UserPlus, Calculator } from "lucide-react";
+import { UserPlus, Upload, Calculator } from "lucide-react";
 import { getAuthErrorMessage } from "@/lib/auth-errors";
-import type { InterestMethod, CompoundFrequency } from "@/types";
+import type { InterestMethod, CompoundFrequency, LoanDirection } from "@/types";
 
 interface AddMemberFormProps {
   onSuccess?: () => void;
@@ -29,6 +33,9 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
   const [shekdaRate, setShekdaRate] = useState("");
   const [startDate, setStartDate] = useState("");
   const [status, setStatus] = useState<"active" | "settled">("active");
+  const [direction, setDirection] = useState<LoanDirection>("given");
+  const [givenBy, setGivenBy] = useState("");
+  const [takenBy, setTakenBy] = useState("");
   const [endDate, setEndDate] = useState("");
   const [interestMethod, setInterestMethod] = useState<InterestMethod>("shekda_simple");
   const [annualRate, setAnnualRate] = useState("");
@@ -55,13 +62,16 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
         createdAt: serverTimestamp(),
       });
 
-      const loanData: Record<string, unknown> = {
+      const loanData: any = {
         memberId: memberRef.id,
         ownerId,
         principal: parseFloat(principal),
-        shekdaRate: shekdaRate ? parseFloat(shekdaRate) : 0,
+        shekdaRate: (interestMethod === "no_interest" || !shekdaRate) ? 0 : parseFloat(shekdaRate),
         startDate: Timestamp.fromDate(new Date(startDate)),
         interestMethod,
+        direction,
+        givenBy: givenBy || null,
+        takenBy: takenBy || null,
         proofDocuments: [],
         status,
         createdAt: serverTimestamp(),
@@ -93,6 +103,9 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
       setStartDate("");
       setEndDate("");
       setStatus("active");
+      setDirection("given");
+      setGivenBy("");
+      setTakenBy("");
       setInterestMethod("shekda_simple");
       setAnnualRate("");
       setMaturityDate("");
@@ -107,24 +120,66 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
 
   return (
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Full Name"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          required
-        />
         <div className="grid gap-4 sm:grid-cols-2">
           <Input
-            label="Email (for member login)"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            label="Member / Entity Name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="e.g. Ramesh or HDFC Bank"
+            required
           />
           <Input
             label="Phone"
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
+            placeholder="Optional"
+          />
+        </div>
+
+        {/* Loan Direction Selection */}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-slate-700">
+            Entry Type
+          </label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setDirection("given")}
+              className={`flex-1 rounded-xl border px-3 py-2 text-xs font-bold uppercase transition-all ${
+                direction === "given"
+                  ? "border-emerald-500 bg-emerald-50 text-emerald-700 ring-2 ring-emerald-500/20"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+              }`}
+            >
+              Money Given (I lent)
+            </button>
+            <button
+              type="button"
+              onClick={() => setDirection("taken")}
+              className={`flex-1 rounded-xl border px-3 py-2 text-xs font-bold uppercase transition-all ${
+                direction === "taken"
+                  ? "border-amber-500 bg-amber-50 text-amber-700 ring-2 ring-amber-500/20"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+              }`}
+            >
+              Money Taken (I borrowed)
+            </button>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Input
+            label="Given By"
+            value={givenBy}
+            onChange={(e) => setGivenBy(e.target.value)}
+            placeholder="Who paid the money?"
+          />
+          <Input
+            label="Taken By"
+            value={takenBy}
+            onChange={(e) => setTakenBy(e.target.value)}
+            placeholder="Who received the money?"
           />
         </div>
 
@@ -162,14 +217,15 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
         {/* Calculation Method Selection */}
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-slate-700">
-            Calculation Method
+            Interest Method
           </label>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
             {[
               { id: "shekda_simple", label: "Shekda Simple" },
               { id: "shekda_compound", label: "Shekda Compound" },
-              { id: "fd_compound", label: "Bank FD (Compound)" },
-              { id: "fd_payout", label: "Bank FD (Payout)" },
+              { id: "fd_compound", label: "Bank FD" },
+              { id: "no_interest", label: "No Interest" },
+              { id: "fd_payout", label: "Payout FD" },
             ].map((method) => (
               <button
                 key={method.id}
@@ -182,7 +238,7 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
                 }`}
               >
                 <Calculator className={`h-4 w-4 mb-1 ${interestMethod === method.id ? "text-emerald-600" : "text-slate-400"}`} />
-                <span className="text-[10px] font-bold uppercase leading-tight">{method.label}</span>
+                <span className="text-[9px] font-bold uppercase leading-tight">{method.label}</span>
               </button>
             ))}
           </div>
@@ -199,9 +255,16 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
             required
           />
           
-          {interestMethod.startsWith("shekda") ? (
+          {interestMethod === "no_interest" ? (
+             <div className="space-y-1">
+               <label className="block text-sm font-medium text-slate-400">Rate (%)</label>
+               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400">
+                 Interest Free
+               </div>
+             </div>
+          ) : interestMethod.startsWith("shekda") ? (
             <Input
-              label="Shekda Rate (% per month)"
+              label="Shekda Rate (%)"
               type="number"
               min="0"
               step="0.01"
@@ -211,7 +274,7 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
             />
           ) : (
             <Input
-              label="Annual Interest Rate (%)"
+              label="Annual Rate (%)"
               type="number"
               min="0"
               step="0.01"

@@ -24,11 +24,14 @@ export interface Member {
 
 export type LoanStatus = "active" | "settled" | "wrong_entry";
 
+export type LoanDirection = "given" | "taken";
+
 export type InterestMethod = 
   | "shekda_simple" 
   | "shekda_compound" 
   | "fd_compound" 
   | "fd_payout"
+  | "no_interest"
   | "custom";
 
 export type CompoundFrequency = 
@@ -79,6 +82,11 @@ export interface Loan {
   settlementNote?: string;
   capitalizationHistory?: CapitalizationEvent[];
   withdrawalHistory?: WithdrawalEvent[];
+
+  // Attribution and Direction
+  direction: LoanDirection; 
+  givenBy?: string; 
+  takenBy?: string; 
 
   // New FD/Compound fields
   interestMethod?: InterestMethod;

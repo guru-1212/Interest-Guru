@@ -6,6 +6,7 @@ import { computeLoanBalance } from "@/lib/loan-balance";
 import { useInterestClock } from "@/hooks/useInterestClock";
 import { usePayments } from "@/hooks/usePayments";
 import { MarkWrongEntryModal } from "./MarkWrongEntryModal";
+import { differenceInDays } from "date-fns";
 import type { Member, Loan, Payment } from "@/types";
 
 interface MemberCardProps {
@@ -39,13 +40,18 @@ export function MemberCard({
         )
       : null;
 
+  const isTaken = loan?.direction === "taken";
+  const daysElapsed = loan ? differenceInDays(calculationDate, loan.startDate) : 0;
+
   return (
     <Link href={`/owner/members/${member.id}`}>
       <article
-        className={`group relative overflow-hidden rounded-3xl border border-slate-100 bg-white p-5 transition-all duration-300 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1`}
+        className={`group relative overflow-hidden rounded-3xl border ${
+          isTaken ? "border-amber-100 bg-amber-50/10" : "border-slate-100 bg-white"
+        } p-5 transition-all duration-300 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1`}
       >
         <div className="flex items-center justify-between mb-4">
-          <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl bg-slate-50 border border-slate-100">
+          <div className={`relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl border ${isTaken ? "border-amber-100 bg-amber-50" : "border-slate-100 bg-slate-50"}`}>
             {member.profilePhotoUrl ? (
               <img
                 src={member.profilePhotoUrl}
@@ -53,24 +59,34 @@ export function MemberCard({
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
             ) : (
-              <div className="flex h-full w-full items-center justify-center bg-emerald-50 text-emerald-600">
+              <div className={`flex h-full w-full items-center justify-center ${isTaken ? "text-amber-600" : "text-emerald-600"}`}>
                 <span className="text-lg font-bold">
                   {member.fullName.charAt(0)}
                 </span>
               </div>
             )}
           </div>
-          {loan?.status === "active" ? (
-            <span className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-600 uppercase tracking-wider">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Active
+
+          <div className="flex flex-col items-end gap-1">
+            <span className={`rounded-full px-2 py-0.5 text-[9px] font-black uppercase tracking-widest border ${
+              isTaken 
+                ? "bg-amber-100 text-amber-700 border-amber-200" 
+                : "bg-emerald-100 text-emerald-700 border-emerald-200"
+            }`}>
+              {loan?.direction ?? "GIVEN"}
             </span>
-          ) : loan?.status === "settled" && (
-            <span className="flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-              Settled
-            </span>
-          )}
-          <div className="ml-auto">
+            
+            {loan?.status === "active" ? (
+              <span className="flex items-center gap-1 text-[9px] font-bold text-slate-400 uppercase tracking-tight">
+                <span className={`h-1 w-1 rounded-full ${isTaken ? "bg-amber-500" : "bg-emerald-500"} animate-pulse`} />
+                Active
+              </span>
+            ) : loan?.status === "settled" && (
+              <span className="text-[9px] font-bold text-slate-400 uppercase">Settled</span>
+            )}
+          </div>
+
+          <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <MarkWrongEntryModal 
               memberId={member.id} 
               memberName={member.fullName} 
@@ -84,24 +100,24 @@ export function MemberCard({
             <h3 className="truncate text-base font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">
               {member.fullName}
             </h3>
-            <p className="text-xs font-medium text-slate-400">
-              {loan?.interestMethod?.startsWith("fd") 
-                ? `Bank FD @ ${loan.annualRate}% / year`
-                : `${loan?.interestMethod === "shekda_compound" ? "Compound " : ""}Shekda @ ${loan?.shekdaRate}% / month`}
-            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-medium text-slate-400">
+               <span className="bg-slate-50 px-1.5 py-0.5 rounded text-slate-500">Date: {loan?.startDate.toLocaleDateString('en-IN')}</span>
+               <span className="bg-slate-50 px-1.5 py-0.5 rounded text-slate-500">Day: {daysElapsed}</span>
+               {loan?.givenBy && <span className="bg-slate-50 px-1.5 py-0.5 rounded text-slate-600 font-semibold border border-slate-100">👤 {loan.givenBy}</span>}
+            </div>
           </div>
 
           {loan ? (
             <div className="pt-2">
-              <div className="flex justify-between text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+              <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
                 <span>Principal</span>
-                <span>{loan.status === "settled" ? "Total Interest Earned" : "Live balance (Grand Total)"}</span>
+                <span>{isTaken ? "I Owe Total" : "Live balance"}</span>
               </div>
               <div className="flex items-baseline justify-between">
                 <span className="text-sm font-semibold text-slate-600">
                   {formatCurrency(loan.principal)}
                 </span>
-                <span className={`text-lg font-extrabold ${loan.status === "settled" ? "text-slate-600" : "text-emerald-600"}`}>
+                <span className={`text-lg font-extrabold ${isTaken ? "text-amber-600" : "text-emerald-600"}`}>
                   {effectiveLoading ? (
                     <span className="text-sm font-medium text-slate-400">Loading…</span>
                   ) : balance ? (
@@ -111,6 +127,12 @@ export function MemberCard({
                   )}
                 </span>
               </div>
+              
+              {!effectiveLoading && balance && balance.breakdown.totalInterest > 0 && (
+                <p className={`mt-1 text-right text-[10px] font-bold ${isTaken ? "text-orange-500" : "text-emerald-600"}`}>
+                  + Interest: {formatCurrency(balance.breakdown.totalInterest)}
+                </p>
+              )}
               
               {loan.status === "settled" && balance && (
                 <div className="mt-3 border-t border-slate-50 pt-2 flex justify-between items-center">

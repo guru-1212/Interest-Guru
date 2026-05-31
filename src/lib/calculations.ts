@@ -167,6 +167,18 @@ export function calculateInterest(
     case "fd_payout":
       // FD Payout is actually just simple interest on the principal at annual rate
       return calculateFDCompound(principal, annualRate, "yearly", startDate, asOf); // Simplified: payout frequency doesn't change total accrued if it's not compounding
+    case "no_interest":
+      const diffYears = differenceInYears(asOf, startDate);
+      const diffMonths = differenceInMonths(asOf, addYears(startDate, diffYears));
+      const diffDays = differenceInDays(asOf, addMonths(addYears(startDate, diffYears), diffMonths));
+      return {
+        years: diffYears,
+        months: diffMonths,
+        days: diffDays,
+        totalInterest: 0,
+        grandTotal: principal,
+        monthlyInterest: 0,
+      };
     case "shekda_simple":
     default:
       return calculateShekdaSimple(principal, shekdaRate, startDate, asOf);
